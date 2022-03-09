@@ -1,0 +1,31 @@
+
+*{
+	/* Margin: 0; */
+	/* padding: 0; */
+	box-sizing:border-box;
+}
+body{
+	width: 100%;
+	height:100%;
+	overflow: hidden;
+}
+.floor {
+	position: absolute;
+	/* top: -200%; */
+	/*  left: -200%; */
+	width: 100%;
+	height: 100%;
+	background: url('floor/Brick_01.png');
+	/* opengameart.org */
+	
+	/* transform: rotate(50deg);  */
+	/*better with pure css transform property: */ 
+	/* transform: rotate3d(1, 0, 1, 50deg);  /* x, y, z, angle */ */
+}
+#canvas1 {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width:100%;
+	height: 100%;
+}

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="biewport" content="width=device-width, initial-scale=1.0">
+	<title>Collision test</title>
+	<!-- <link rel="stylesheet" href="style.css"> -->
+</head>
+
+<body>
+	<canvas id="canvas1" width="822" height="524"></canvas>
+	
+	
+	<script>
+		const canvas = document.getElementById('canvas1');
+		const ctx = canvas.getContext('2d');
+		
+		const mouse = {
+			x: undefined,
+			y: undefined,
+			lastX: undefined,
+			lastY: undefined,
+		}
+		
+		
+		playerSprite = new Image();
+		playerSprite.src = 'robotball_spritesheet.png';	
+		
+	
+		const scale = 10;
+		
+		class Obstacle{
+			constructor(){
+				this.width =	150;
+				this.height =	100;
+				this.x =		(canvas.width - this.width)/2;
+				this.y =		(canvas.height - this.height)/2;
+				this.type = "rectangle";
+			}
+			
+			draw(){
+			<!-- console.log(this.x, this.y , this.width, this.height); -->
+			ctx.beginPath();
+			ctx.lineWidth = "10";
+			ctx.strokeStyle = "blue";
+			ctx.rect(this.x, this.y , this.width, this.height);
+			ctx.stroke(); 
+			}
+		}
+		
+		class Player{
+			constructor(){
+				this.x = 			undefined;
+				this.y = 			undefined;
+				this.spriteWidth = 	411;
+				this.spriteHeight = 524;
+				this.frameX = 		0;
+				this.frameY = 		0;
+				this.width = this.spriteWidth / scale;
+				this.height = this.spriteHeight / scale;
+				
+				this.radius = this.width/2;
+				this.type = "circle";
+				this.drawXValue = 0;
+			}
+			handlePlayerFrame(){
+				if (this.frameX > 14){
+					this.frameX = 0;
+				}
+				else this.frameX += 1;
+			}
+			update(){
+				<!-- if(intersect(this, obstacle) == false){ -->
+					this.x = mouse.x - this.width/2;
+					this.y =  mouse.y - this.height/2;
+					this.handlePlayerFrame();
+				<!-- } -->
+				
+			}
+			
+			drawPlayerHitbox(){
+				ctx.fillStyle = "red";
+				// ctx.fillRect(mouse.x - player.width/2 ,mouse.y - player.height/2, player.width,  player.height)
+				
+				ctx.beginPath();
+				ctx.arc(mouse.x, mouse.y + 3, this.width/2, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			
+			
+			drawPlayerSprite(){
+				if (mouse.x > mouse.lastX){
+					this.drawXValue = this.x - 2* mouse.x;
+					// - mouse.x - player.width/2;  // negative when image from spritesheet is flipped
+					<!-- ctx.translate(originalWidth ,0); -->
+					ctx.scale(-1,1);
+				}
+				else{
+					this.drawXValue = this.x;
+				}
+				ctx.drawImage(playerSprite,							// image
+							this.spriteWidth * this.frameX, 		// x-coordinate in source image
+							this.spriteHeight * this.frameY, 		// y-coordinate in source image
+							this.spriteWidth, 						// segment length of source image
+							this.spriteHeight, 						// segment height of source image
+							this.drawXValue, 							// x-coordinate on canvas   
+							this.y, 								// y-coordinate on canvas
+							this.width, 							// x-size on canvas
+							this.height);							// y-size on canvas
+				ctx.setTransform(1,0,0,1,0,0);
+			}
+		}
+		
+		
+		
+		
+		class Ball {
+			constructor(){
+				this.x = canvas.width/2;
+				this.y = canvas.height/4;
+				this.radius = 20;
+				this.vx = 0;
+				this.vy = 1;
+				this.type= "circle";
+				}
+				draw(){
+				ctx.fillStyle = "green";
+				// ctx.fillRect(mouse.x - player.width/2 ,mouse.y - player.height/2, player.width,  player.height)
+				
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			update(){	
+			if(!collision(this, obstacle)){
+				
+				}
+				else{
+				this.x += this.vx;
+				this.y += this.vy;
+				}
+			}
+		}
+		
+		const player = new Player();
+		const obstacle = new Obstacle();
+		const ball = new Ball();
+		
+		
+		//collision detection between two rectangles
+		function collision(first, second){
+		if ( first.type === "circle" && second.type === "rectangle"){
+			return !(first.x + first.radius < second.x || 		// first obj completely left of second obj
+					first.x > second.x + second.width || 		// first obj completely left of second obj
+					first.y + first.radius < second.y ||		// first obj completely above second obj
+					first.y > second.y + second.height);		// first obj completely below second obj
+			}
+		}
+		//function pointInRectangle(point, rect){
+		
+		
+		//AP = (rect.x - point.x, 				rect.y - point.y)
+		//AB = (rect.x - (rect.x + rect.width), rect.y - rect.y)
+		//AP*AB (scalar) = (rect.x - point.x)*(rect.x - (rect.x + rect.width)) + (rect.y - point.y)*(rect.y - rect.y)
+		// AB*AB (scalar) = (rect.x - (rect.x + rect.width)) * (rect.x - (rect.x + rect.width)) +  (rect.y - rect.y)*(rect.y - rect.y)
+		<!-- if (0 <= (rect.x - point.x)*(rect.x - (rect.x + rect.width)) + (rect.y - point.y)*(rect.y - rect.y) <= (rect.x - (rect.x + rect.width)) * (rect.x - (rect.x + rect.width)) + (rect.y - rect.y)*(rect.y - rect.y) ){ -->
+		<!-- console.log("pointinrect"); -->
+		<!-- } -->
+		//}
+		function intersect(first, second){
+			if ( first.type === "circle" && second.type === "rectangle"){
+			
+				let distanceX = Math.abs(first.x - second.x);
+				let distanceY = Math.abs(first.y - second.y);
+			
+				// 1. fall: keine collision wenn absolute entfernung größer als halbe rechtecklänge + kreisradius ( entlang der kanten)
+				if (distanceX > second.width/2 + first.radius){return false}
+				if (distanceY > second.height/2 + first.radius){return false}
+				
+				// 2. Fall: von den restlichen fällen die aussortieren, die garantiert in collisionsfläche liegen, da entweder x oder y zu nah liegt (entlang der kanten)
+				if(distanceX <= second.width/2){return true};
+				if(distanceY <= second.height/2){return true};
+				
+				// 3. Fall: verbliebene sind schwierige fälle in den ecken des rechtecks
+				<!-- console.log(distanceX, second.width); -->
+				let cornerDistance_sq = (distanceX - second.width/2)*(distanceX - second.width/2) + (distanceX - second.height/2)* (distanceX - second.height/2);
+				
+				
+				return (cornerDistance_sq <= (first.radius*first.radius));
+			}
+		}
+		
+		
+		function collisionDetection(){
+			if (player.x + player.width > obstacle.x && player.x < obstacle.x + obstacle.width){ 
+				// console.log("x-Collision");
+				if (player.y + player.height > obstacle.y && player.y < obstacle.y + obstacle.height){
+				// 	console.log("y-Collision");
+				}
+			}
+		}
+		function animate(){
+		<!-- console.log(mouse.x, mouse.y) -->
+		ctx.clearRect(0,0, canvas.width, canvas.height)
+		function lineFromTo(fromX, fromY, toX, toY){
+			ctx.beginPath();
+			ctx.moveTo(fromX, fromY);
+			ctx.lineTo(toX, toY);
+			ctx.stroke();
+		}
+		obstacle.draw();
+		ball.update();
+		ball.draw();
+		<!-- lineFromTo(mouse.x, mouse.y, obstacle.x, obstacle.y); -->
+		<!-- lineFromTo(mouse.x, mouse.y, obstacle.x + obstacle.width, obstacle.y); -->
+		<!-- lineFromTo(mouse.x, mouse.y, obstacle.x, obstacle.y + obstacle.height); -->
+		<!-- lineFromTo(mouse.x, mouse.y, obstacle.x + obstacle.width, obstacle.y + obstacle.height); -->
+
+		//pointInRectangle(mouse, obstacle);
+		
+		player.update();
+		player.drawPlayerHitbox();
+		player.drawPlayerSprite();
+		<!-- collisionDetection(); -->
+		console.log(intersect(player, obstacle))
+		requestAnimationFrame(animate);
+		}
+		
+		window.onload = function(){
+			animate();
+		}
+		
+		<!-- window.addEventListener('mousemove', e => { -->
+			<!-- mouse.x = e.offsetX; -->
+			<!-- mouse.y = e.offsetY; -->
+		<!-- }); -->
+		
+		window.addEventListener('mousemove', function(event){
+			let rect = canvas.getBoundingClientRect();
+			mouse.lastX = mouse.x;
+			mouse.lastY = mouse.y;
+			mouse.x = event.clientX - rect.left;
+			mouse.y = event.clientY - rect.top;
+			//console.log(mouse.x, mouse.y);
+});
+	</script>
+	
+	
+</body>
+</html>
